@@ -602,12 +602,20 @@
             keranjang.forEach((item) => { 
                 let sub = item.harga * item.qty; total += sub; qty += item.qty; 
                 list.innerHTML += `<div style="padding:15px; border-bottom:1px solid #eee;">
-                    <div style="font-weight:600; font-size:14px;">${item.nama}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:600; font-size:14px;">${item.nama}</div>
+                        <span onclick="hapusDariKeranjang('${item.id}')" style="color:var(--primary-red); font-size:12px; cursor:pointer; font-weight:bold;">Hapus</span>
+                    </div>
                     <div style="display:flex; justify-content:space-between; font-size:13px; margin-top:5px;"><span><b style="color:var(--primary-green);">${item.qty} x</b> ${item.harga.toLocaleString('id-ID')}</span><b>Rp${sub.toLocaleString('id-ID')}</b></div>
                 </div>`; 
             });
             document.getElementById('totalVal').innerText = "Rp" + total.toLocaleString('id-ID');
             document.getElementById('headerCartBadge').innerText = qty; document.getElementById('headerCartBadge').classList.toggle('d-none', qty===0);
+        }
+
+        function hapusDariKeranjang(id) {
+            keranjang = keranjang.filter(item => item.id !== id);
+            updateTampilanKasir();
         }
 
         function bukaPayment() {
