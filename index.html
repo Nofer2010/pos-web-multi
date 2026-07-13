@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#3B82F6">
+    <title>POS Web Multi - Admin</title>
+    
+    <!-- Logo Aplikasi (Favicon) -->
+    <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=POS&background=3B82F6&color=fff&rounded=true&bold=true">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root { --primary-red: #D32F2F; --primary-blue: #3B82F6; --primary-green: #5CB85C; --primary-purple: #9333EA; --text-main: #1F2937; --text-muted: #6B7280; --bg-light: #F3F4F6; --bg-white: #FFFFFF; --border-color: #E5E7EB; --warning-color: #F59E0B; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg-light); }
+        .d-none { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-light); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
+        .loading-overlay.hidden { opacity: 0; visibility: hidden; }
+        .loading-spinner { width: 50px; height: 50px; border: 4px solid #E5E7EB; border-top-color: var(--primary-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        .auth-container { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { width: 100%; max-width: 400px; background: white; border-radius: 20px; padding: 30px 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 5px; }
+        .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none; }
+        .btn-blue { width: 100%; padding: 14px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .app-container { width: 100%; max-width: 480px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--bg-light); box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .header { background: var(--primary-blue); color: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; }
+        
+        /* Tambahan Class untuk Logo Header */
+        .header-logo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background-color: white; border: 2px solid rgba(255,255,255,0.5); }
+        
+        .content-area { flex: 1; overflow-y: auto; padding-bottom: 90px; }
+        .search-box { background: white; border-radius: 8px; display: flex; align-items: center; padding: 10px; flex: 1; }
+        .search-box input { border: none; width: 100%; outline: none; font-size: 14px; margin-left: 8px; background: transparent; }
+        .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px; }
+        .product-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 5px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; overflow: hidden; min-height: 140px;}
+        .grid-product-img { width: 100%; height: 60px; background: #F3F4F6; display: flex; align-items: center; justify-content: center; font-size: 24px; border-radius: 4px; margin-bottom: 5px; overflow: hidden; }
+        .grid-product-img img { width: 100%; height: 100%; object-fit: cover; }
+        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 65px; background: white; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 50; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--text-muted); cursor: pointer; width: 100%; }
+        .nav-item.active { color: var(--primary-blue); font-weight: 600; }
+        .sidebar-overlay, .bottom-sheet-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .sidebar-overlay.active, .bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
+        .bottom-sheet-overlay { position: fixed; display: none; flex-direction: column; justify-content: flex-end; z-index: 200; }
+        .bottom-sheet-overlay.active { display: flex; }
+        .bottom-sheet { background: var(--bg-light); padding: 20px; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; }
+        .sidebar { position: absolute; top: 0; left: -100%; width: 85%; max-width: 320px; height: 100%; background: white; z-index: 100; transition: 0.3s; display: flex; flex-direction: column; }
+        .sidebar.active { left: 0; }
+        .sb-menu-item { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; font-size: 14px; cursor: pointer; }
+        .inv-tabs { display: flex; background: white; border-bottom: 1px solid var(--border-color); }
+        .inv-tab { flex: 1; text-align: center; padding: 14px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; }
+        .inv-tab.active { color: var(--primary-blue); border-bottom: 2px solid var(--primary-blue); }
+        .fab-container { position: absolute; bottom: 85px; right: 20px; z-index: 40; }
+        .fab { width: 55px; height: 55px; background: var(--primary-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 30px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); cursor: pointer; }
+
+        /* CSS KHUSUS UNTUK CETAK THERMAL */
+        @media print {
+            body * { visibility: hidden; }
+            #area-cetak-struk, #area-cetak-struk * { visibility: visible; }
+            #area-cetak-struk { position: absolute; left: 0; top: 0; width: 58mm; margin: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="area-cetak-struk" class="d-none" style="width: 58mm; padding: 10px; font-family: monospace; font-size: 12px; color: black; background: white;"></div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Memuat Data...</div>
+    </div>
+
+    <!-- Halaman Login / Auth -->
+    <div class="auth-container d-none" id="authSection">
+        <div class="auth-card">
+            <!-- Menambahkan Logo di Halaman Login -->
+            <img src="https://ui-avatars.com/api/?name=POS&background=3B82F6&color=fff&rounded=true&bold=true" alt="App Logo" style="width: 70px; height: 70px; margin-bottom: 10px; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <h2 style="color:var(--primary-blue); margin-bottom: 20px;">POS WEB Multi</h2>
+            
+            <div id="loginView">
+                <form onsubmit="event.preventDefault(); prosesLogin();">
+                    <div class="input-group"><label>Email</label><input type="email" id="loginEmail" required></div>
+                    <div class="input-group"><label>Kata Sandi</label><input type="password" id="loginPassword" required></div>
+                    <button type="submit" class="btn-blue">Masuk</button>
+                </form>
+                <div style="margin-top:15px; font-size:13px; color:var(--primary-blue); cursor:pointer;" onclick="tukarTampilan('daftar')">Belum punya akun? Daftar</div>
+            </div>
+            <div id="registerView" class="d-none">
+                <form onsubmit="event.preventDefault(); prosesDaftar();">
+                    <div class="input-group"><label>Nama Toko</label><input type="text" id="regShopName" required></div>
+                    <div class="input-group"><label>Email</label><input type="email" id="regEmail" required></div>
+                    <div class="input-group"><label>Kata Sandi</label><input type="password" id="regPassword" required minlength="6"></div>
+                    <button type="submit" class="btn-blue">Daftar Sekarang</button>
+                </form>
+                <div style="margin-top:15px; font-size:13px; color:var(--primary-blue); cursor:pointer;" onclick="tukarTampilan('login')">Sudah punya akun? Masuk</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Utama -->
+    <div class="app-container d-none" id="dashboardSection">
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        <div class="sidebar" id="sidebarMenu">
+            <div style="background:var(--primary-blue); color:white; padding:20px; font-weight:bold;">POS WEB MULTI v5.2</div>
+            <div style="flex:1; overflow-y:auto;">
+                <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: #E5E7EB; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                        <img id="sideStoreLogo" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                        <span id="sideStoreIcon" style="font-size: 24px;">🏪</span>
+                    </div>
+                    <div><div style="font-weight:bold; color:var(--primary-blue);" id="sideShopName">TOKO SAYA</div><div style="font-size:12px; color:var(--text-muted);" id="sideUserEmail">email</div></div>
+                </div>
+                <div class="sb-menu-item" onclick="bukaPesananOnline()" style="display: flex; justify-content: space-between; align-items: center; background: #FFF9C4;">
+                    <div>🛎️ Pesanan Masuk (Online)</div>
+                    <div id="sideNotifBadge" class="d-none" style="background:var(--primary-red); color:white; border-radius:12px; padding:3px 10px; font-size:11px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">0</div>
+                </div>
+                <div class="sb-menu-item" onclick="bukaManajemen()">📦 Manajemen Persediaan</div>
+                <div class="sb-menu-item" onclick="bagikanLinkToko()">🌐 Bagikan Link Toko Pembeli</div>
+                <div class="sb-menu-item" onclick="bukaProfilToko()">⚙️ Profil & Pengaturan Toko</div>
+                <div class="sb-menu-item" onclick="bukaPengaturanPrinter()">🖨️ Pengaturan Printer Thermal</div>
+                <div class="sb-menu-item" onclick="prosesLogout()" style="color:var(--primary-red);">🚪 Keluar Aplikasi</div>
+            </div>
+        </div>
+
+        <div class="header">
+            <!-- Penambahan Logo di Header Dashboard -->
+            <div class="header-left" style="display:flex; align-items:center; gap:10px;">
+                <span onclick="toggleSidebar()" style="font-size:24px; cursor:pointer;">☰</span>
+                <img src="https://ui-avatars.com/api/?name=POS&background=fff&color=3B82F6&rounded=true&bold=true" class="header-logo" id="logoHeaderMain" alt="Logo">
+                <div style="font-weight:bold; font-size:16px;" id="shopTitleText">MEMUAT...</div>
+            </div>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <div style="position:relative; cursor:pointer;" onclick="bukaPesananOnline()">
+                    <span style="font-size:20px;">🔔</span>
+                    <div id="notifBadge" class="d-none" style="position:absolute; top:-5px; right:-5px; background:var(--primary-red); color:white; border-radius:50%; width:16px; height:16px; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</div>
+                </div>
+                <div style="position:relative; cursor:pointer;" onclick="bukaKeranjang()">
+                    <span style="font-size:20px;">🛒</span>
+                    <div id="headerCartBadge" class="d-none" style="position:absolute; top:-5px; right:-5px; background:var(--primary-red); color:white; border-radius:50%; width:16px; height:16px; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area" id="mainContentView">
+            <div id="viewMenangkal" class="fade-in">
+                <div style="background:var(--primary-blue); padding:16px;">
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" id="inputCariMenangkal" placeholder="Cari barang untuk dijual..." oninput="cariBarangDepan(this.value)">
+                    </div>
+                </div>
+                <div id="menangkalSearchResult" class="product-grid d-none"></div>
+                <div id="menangkalDefaultContent" style="padding:20px; text-align:center;">
+                    <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Ketik nama barang di atas untuk memulai penjualan cepat.</p>
+                    <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); display:inline-block;" onclick="pindahTab('Item')">
+                        <div style="width:50px; height:50px; background:var(--primary-green); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 10px; cursor:pointer;">+</div>
+                        <div style="font-weight:bold;">LIHAT SEMUA ITEM</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="viewItem" class="d-none fade-in">
+                <div style="background:var(--primary-blue); padding:16px;"><div class="search-box"><span>🔍</span><input type="text" id="inputCariItem" placeholder="Cari barang..." oninput="cariBarang(this.value)"></div></div>
+                <div class="product-grid" id="productGridContainer"></div>
+            </div>
+
+            <div id="viewHariIni" class="d-none fade-in" style="padding:16px;">
+                <h3 style="color:var(--primary-blue); margin-bottom:5px;">Transaksi Hari Ini</h3>
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px;">Klik untuk Lacak Resi, Cetak Label Pengiriman, & Cetak Struk.</p>
+                <div id="listTransaksiHariIni"></div>
+            </div>
+
+            <div id="viewLaporan" class="d-none fade-in" style="padding:16px;">
+                <h3 style="text-align:center; margin-bottom:20px;">Laporan Penjualan</h3>
+                <div style="background:white; padding:20px; border-radius:12px; border-left:5px solid var(--primary-green); box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="font-size:12px; color:var(--text-muted);">Total Pendapatan Hari Ini</div>
+                    <div style="font-size:24px; font-weight:bold; color:var(--primary-blue);" id="laporanTotalHariIni">Rp 0</div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px;">
+                    <div style="background:white; padding:15px; border-radius:8px; text-align:center; border:1px solid #eee;"><div style="font-size:11px; color:var(--text-muted);">Modal Stok</div><div style="font-weight:bold;" id="valModal">Rp 0</div></div>
+                    <div style="background:white; padding:15px; border-radius:8px; text-align:center; border:1px solid #eee;"><div style="font-size:11px; color:var(--text-muted);">Potensi Jual</div><div style="font-weight:bold; color:var(--primary-green);" id="valJual">Rp 0</div></div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item tab-btn" onclick="pindahTab('Laporan')"><span style="font-size:20px;">📊</span>Laporan</div>
+            <div class="nav-item tab-btn" onclick="pindahTab('HariIni')"><span style="font-size:20px;">🕒</span>Hari Ini</div>
+            <div class="nav-item tab-btn active" onclick="pindahTab('Menangkal')"><span style="font-size:20px;">🏠</span>Home</div>
+            <div class="nav-item tab-btn" onclick="pindahTab('Item')"><span style="font-size:20px;">📦</span>Item</div>
+        </nav>
+    </div>
+
+    <!-- Overlay Pesanan Online -->
+    <div class="bottom-sheet-overlay" id="onlineOrderOverlay" onclick="tutupPesananOnline()">
+        <div class="bottom-sheet" onclick="event.stopPropagation()" style="height: 85vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: var(--primary-blue);">Pesanan Online Masuk</h3>
+                <span onclick="tutupPesananOnline()" style="font-size:20px; cursor:pointer;">❌</span>
+            </div>
+            <div class="inv-tabs" style="margin-bottom: 15px; border-radius: 8px; border: 1px solid #eee; overflow:hidden;">
+                <div class="inv-tab active" id="tabPesananBaru" onclick="gantiTabPesananOnline('baru')">Pesanan Baru</div>
+                <div class="inv-tab" id="tabPesananProses" onclick="gantiTabPesananOnline('diproses')">Diproses</div>
+            </div>
+            <div id="listPesananOnlineContainer" style="flex: 1; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Profil Section -->
+    <div class="app-container d-none fade-in" id="profilSection">
+        <div class="header" style="justify-content:space-between;">
+            <!-- Penambahan Logo di Header Profil -->
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span onclick="tutupProfilToko()" style="font-size:20px; cursor:pointer;">⬅️</span>
+                <img src="https://ui-avatars.com/api/?name=POS&background=fff&color=3B82F6&rounded=true&bold=true" class="header-logo dyn-logo" alt="Logo">
+                <span style="font-weight:bold;">Profil Toko</span>
+            </div>
+            <button onclick="simpanProfilToko()" style="background:var(--primary-green); color:white; border:none; padding:5px 15px; border-radius:6px; font-weight:bold;">Simpan</button>
+        </div>
+        <div style="padding:20px; flex:1; overflow-y:auto; background:white;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="width:100px; height:100px; border:2px dashed #ccc; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer;" onclick="document.getElementById('inputUploadLogoToko').click()">
+                    <img id="storeLogoPreview" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span id="storeLogoPlaceholder" style="font-size:30px;">🏪</span>
+                </div>
+                <input type="file" id="inputUploadLogoToko" accept="image/*" style="display:none;" onchange="prosesUploadLogoToko(event)">
+                <div style="font-size:12px; color:var(--text-muted);">Ketuk untuk ganti logo</div>
+            </div>
+            <div class="input-group"><label>Nama Toko *</label><input type="text" id="inputNamaToko"></div>
+            <div class="input-group"><label>No. WhatsApp (Tanpa angka 0 / 62) *</label><input type="tel" id="inputWaToko" placeholder="Contoh: 812345678"></div>
+            <div class="input-group"><label>Alamat Toko</label><textarea id="inputAlamatToko" rows="3"></textarea></div>
+            
+            <div style="margin-top: 20px; margin-bottom: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
+                <strong style="font-size: 14px; color: var(--primary-blue);">Informasi Pembayaran Transfer</strong>
+            </div>
+            <div class="input-group"><label>Nama Bank</label><input type="text" id="inputBankToko" placeholder="Contoh: BCA / Mandiri / BRI / DANA"></div>
+            <div class="input-group"><label>Nomor Rekening</label><input type="number" id="inputRekToko" placeholder="Contoh: 1234567890"></div>
+            <div class="input-group"><label>Atas Nama</label><input type="text" id="inputAnToko" placeholder="Contoh: Ferdian Ocktavianto"></div>
+            
+            <div style="font-size:11px; color:var(--text-muted); margin-top: 15px;">*Data ini akan muncul di Shopfront Pelanggan. Nomor WhatsApp digunakan untuk menerima pesanan otomatis.</div>
+        </div>
+    </div>
+
+    <!-- Manajemen Section -->
+    <div class="app-container d-none fade-in" id="manajemenSection">
+        <div class="header">
+            <!-- Penambahan Logo di Header Manajemen -->
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span onclick="tutupManajemen()" style="font-size:20px; cursor:pointer;">⬅️</span>
+                <img src="https://ui-avatars.com/api/?name=POS&background=fff&color=3B82F6&rounded=true&bold=true" class="header-logo dyn-logo" alt="Logo">
+                <span style="font-weight:bold;">Manajemen Produk</span>
+            </div>
+        </div>
+        <div style="padding:15px; background:white; border-bottom:1px solid #eee;"><input type="text" id="inputCariManajemen" placeholder="Cari nama barang..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;" oninput="cariBarang(this.value)"></div>
+        <div id="invListContainer" style="flex:1; overflow-y:auto; padding:15px; background:var(--bg-light); padding-bottom:100px;"></div>
+        <div class="fab-container"><div class="fab" onclick="bukaTambahBarang()">+</div></div>
+    </div>
+
+    <!-- Tambah Barang Section -->
+    <div class="app-container d-none fade-in" id="tambahBarangSection">
+        <div class="header" style="justify-content:space-between;">
+            <!-- Penambahan Logo di Header Tambah Barang -->
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span onclick="tutupTambahBarang()" style="font-size:20px; cursor:pointer;">⬅️</span>
+                <img src="https://ui-avatars.com/api/?name=POS&background=fff&color=3B82F6&rounded=true&bold=true" class="header-logo dyn-logo" alt="Logo">
+                <span style="font-weight:bold;" id="titleFormBarang">Tambah Barang</span>
+            </div>
+            <button onclick="simpanBarang()" style="background:var(--primary-green); color:white; border:none; padding:5px 15px; border-radius:6px; font-weight:bold;">Simpan</button>
+        </div>
+        <div style="padding:20px; flex:1; overflow-y:auto; background:white;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="width:100px; height:100px; border:2px dashed #ccc; border-radius:12px; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer;" onclick="document.getElementById('inputUploadGambarProduk').click()">
+                    <img id="productImgPreview" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span id="productImgPlaceholder" style="font-size:30px;">📸</span>
+                </div>
+                <input type="file" id="inputUploadGambarProduk" accept="image/*" style="display:none;" onchange="prosesUploadGambarProduk(event)">
+                <div style="font-size:12px; color:var(--text-muted);">Ketuk untuk ganti foto</div>
+            </div>
+            <div class="input-group"><label>Nama Barang *</label><input type="text" id="inputNama"></div>
+            <div class="input-group"><label>Kategori</label><input type="text" id="inputKategori" placeholder="Makanan, Minuman, dsb"></div>
+            <div class="input-group"><label>Stok Tersedia *</label><input type="number" id="inputStok" value="0"></div>
+            <div class="input-group"><label>Harga Beli/Modal (Rp)</label><input type="number" id="inputHargaBeli" value="0"></div>
+            <div class="input-group"><label>Harga Jual (Rp) *</label><input type="number" id="inputHarga" value="0"></div>
+        </div>
+    </div>
+
+    <!-- Keranjang Kasir Section -->
+    <div class="app-container d-none fade-in" id="viewKasir">
+        <div class="header">
+            <!-- Penambahan Logo di Header Kasir -->
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span onclick="tutupKasir()" style="font-size:20px; cursor:pointer;">❌</span>
+                <img src="https://ui-avatars.com/api/?name=POS&background=fff&color=3B82F6&rounded=true&bold=true" class="header-logo dyn-logo" alt="Logo">
+                <span style="font-weight:bold;">Keranjang Kasir</span>
+            </div>
+            <span style="font-size:20px; cursor:pointer;" onclick="bukaPelanggan()">👤</span>
+        </div>
+        <div id="kasirPelangganInfo" class="d-none" style="padding:10px 15px; background:#EBF5FF; font-weight:bold; font-size:13px; color:var(--primary-blue); display:flex; justify-content:space-between; border-bottom:1px solid #ccc;">
+            <span id="kasirPelangganLabel">Pelanggan: -</span>
+            <span style="color:var(--primary-red); cursor:pointer;" onclick="hapusPelangganAktif()">Hapus</span>
+        </div>
+        <div id="keranjangList" style="flex:1; overflow-y:auto; background:white; padding-bottom:100px;"></div>
+        <div style="position:absolute; bottom:0; left:0; right:0; padding:15px; background:white; border-top:1px solid #eee;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px; margin-bottom:10px;"><span>Total:</span><span id="totalVal" style="color:var(--primary-blue);">Rp0</span></div>
+            <button onclick="bukaPayment()" style="width:100%; background:var(--primary-green); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">LANJUT PEMBAYARAN</button>
+        </div>
+    </div>
+
+    <!-- Overlay Payment -->
+    <div class="bottom-sheet-overlay" id="paymentOverlay" onclick="tutupPayment()">
+        <div class="bottom-sheet" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom:15px; text-align:center;">Proses Pembayaran</h3>
+            <div style="background:#EBF5FF; padding:15px; border-radius:8px; text-align:center; margin-bottom:15px;">
+                <div style="font-size:12px; color:var(--text-muted);">Total Belanja + Ongkir</div>
+                <div style="font-size:24px; font-weight:bold; color:var(--primary-blue);" id="payTotalTagihan">Rp0</div>
+            </div>
+            <div class="input-group"><label>Input Ongkos Kirim J&T/JNE (Rp)</label><input type="number" id="inputOngkir" placeholder="0" oninput="hitungTotalAkhir()"></div>
+            <div class="input-group"><label>Uang Diterima dari Pelanggan (Rp)</label><input type="number" id="inputUangDiterima" placeholder="0" oninput="hitungKembalian()"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px; margin-bottom:20px; padding-top:10px; border-top:1px dashed #ccc;">
+                <span>Kembalian:</span><span id="payKembalian" style="color:var(--text-muted);">Rp0</span>
+            </div>
+            <button onclick="konfirmasiPembayaran()" style="width:100%; background:var(--primary-green); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold; font-size:16px;">SELESAIKAN TRANSAKSI</button>
+        </div>
+    </div>
+
+    <script>
+        // INISIALISASI FIREBASE
+        const firebaseConfig = { apiKey: "AIzaSyAAj1F-zRcBOkPRL9wXg4skJ22UlbqXHw4", authDomain: "kasir-ferdi.firebaseapp.com", databaseURL: "https://kasir-ferdi-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "kasir-ferdi" };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const auth = firebase.auth(); const db = firebase.database();
+        
+        // VARIABEL GLOBAL
+        let daftarProdukGlobal = []; let daftarTransaksiGlobal = []; let pesananOnlineGlobal = [];
+        let keranjang = []; let pelangganAktif = null; let totalBayarAktif = 0; let ongkirAktif = 0;
+        let editProductId = null; let produkgambarRawBase64 = "";
+        
+        let namaTokoGlobal = "Toko Saya"; 
+        let teleponTokoGlobal = ""; 
+        let alamatTokoGlobal = "";
+        let logoTokoGlobal = ""; 
+
+        // ==========================================
+        // FUNGSI AUTH & STARTUP
+        // ==========================================
+        auth.onAuthStateChanged((user) => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            if (user) {
+                document.getElementById('authSection').classList.add('d-none');
+                document.getElementById('dashboardSection').classList.remove('d-none');
+                document.getElementById('sideUserEmail').innerText = user.email;
+                muatProfilToko(user.uid);
+                muatDataBarang(user.uid);      
+                muatDataLaporan(user.uid);
+                muatPesananOnline(user.uid);   
+            } else {
+                document.getElementById('dashboardSection').classList.add('d-none');
+                document.getElementById('authSection').classList.remove('d-none');
+            }
+        });
+
+        function tukarTampilan(mode) { document.getElementById('loginView').classList.toggle('d-none', mode==='daftar'); document.getElementById('registerView').classList.toggle('d-none', mode==='login'); }
+        function prosesLogin() { const em=document.getElementById('loginEmail').value, pw=document.getElementById('loginPassword').value; auth.signInWithEmailAndPassword(em,pw).catch(e=>Swal.fire("Error", e.message, "error")); }
+        function prosesDaftar() { const em=document.getElementById('regEmail').value, pw=document.getElementById('regPassword').value, sn=document.getElementById('regShopName').value; Swal.showLoading(); auth.createUserWithEmailAndPassword(em,pw).then(u=>{ db.ref('users/'+u.user.uid).set({shopName:sn, email:em}).then(()=>window.location.reload()); }).catch(e=>Swal.fire("Error",e.message,"error")); }
+        function prosesLogout() { auth.signOut(); }
+
+        // ==========================================
+        // FUNGSI NAVIGASI
+        // ==========================================
+        function pindahTab(tab) {
+            document.getElementById('sidebarMenu').classList.remove('active'); document.getElementById('sidebarOverlay').classList.remove('active');
+            ['Menangkal', 'Item', 'HariIni', 'Laporan'].forEach(id => { document.getElementById('view'+id).classList.add('d-none'); });
+            document.getElementById('view'+tab).classList.remove('d-none');
+            document.querySelectorAll('.bottom-nav .tab-btn').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            if(tab === 'Menangkal' || tab === 'Item') renderProduk(daftarProdukGlobal);
+        }
+        function toggleSidebar() { document.getElementById('sidebarMenu').classList.toggle('active'); document.getElementById('sidebarOverlay').classList.toggle('active'); }
+
+        // ==========================================
+        // FUNGSI PRODUK & MANAJEMEN
+        // ==========================================
+        function muatDataBarang(uid) {
+            db.ref('users/' + uid + '/produk').on('value', (snapshot) => {
+                daftarProdukGlobal = [];
+                if (snapshot.exists()) {
+                    snapshot.forEach((child) => { daftarProdukGlobal.push({ id: child.key, ...child.val() }); });
+                }
+                hitungValuasi();
+                renderProduk(daftarProdukGlobal); 
+            });
+        }
+
+        function renderProduk(dataArray) {
+            const gridContainer = document.getElementById('productGridContainer');
+            const listContainer = document.getElementById('invListContainer');
+            
+            let gridHTML = ""; let listHTML = "";
+
+            if (dataArray.length === 0) {
+                gridHTML = "<p style='grid-column: span 3; text-align:center; color:#999;'>Belum ada barang.</p>";
+                listHTML = "<p style='text-align:center; color:#999;'>Belum ada barang.</p>";
+            } else {
+                dataArray.forEach(data => {
+                    let img = data.gambar ? `<img src="${data.gambar}">` : "📦";
+                    let harga = "Rp" + (data.harga || 0).toLocaleString('id-ID');
+                    
+                    gridHTML += `<div class="product-card" onclick="tambahKeKeranjang('${data.id}', '${data.nama}', ${data.harga}, ${data.stok})">
+                        <div class="grid-product-img">${img}</div>
+                        <div style="font-size:11px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${data.nama}</div>
+                        <div style="font-size:12px; color:var(--primary-blue); font-weight:bold;">${harga}</div>
+                        <div style="font-size:10px; color:var(--text-muted);">Sisa: ${data.stok}</div>
+                    </div>`;
+
+                    listHTML += `<div style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; display:flex; align-items:center; gap:15px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="width:50px; height:50px; background:#EBF5FF; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; overflow:hidden;">${img}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; font-size:14px;">${data.nama}</div>
+                            <div style="color:var(--primary-blue); font-size:13px; font-weight:bold;">${harga}</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Stok: ${data.stok} | Kategori: ${data.kategori || '-'}</div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button onclick="bukaEditBarang('${data.id}')" style="background:var(--primary-blue); color:white; border:none; border-radius:4px; padding:5px 10px; font-size:11px; cursor:pointer;">Edit</button>
+                            <button onclick="hapusBarang('${data.id}')" style="background:var(--primary-red); color:white; border:none; border-radius:4px; padding:5px 10px; font-size:11px; cursor:pointer;">Hapus</button>
+                        </div>
+                    </div>`;
+                });
+            }
+            if(gridContainer) gridContainer.innerHTML = gridHTML;
+            if(listContainer) listContainer.innerHTML = listHTML;
+        }
+
+        function cariBarang(kataKunci) {
+            const query = kataKunci.toLowerCase();
+            const hasil = daftarProdukGlobal.filter(p => p.nama.toLowerCase().includes(query) || (p.kategori && p.kategori.toLowerCase().includes(query)));
+            renderProduk(hasil);
+        }
+
+        function cariBarangDepan(kataKunci) {
+            const res = document.getElementById('menangkalSearchResult'); const def = document.getElementById('menangkalDefaultContent');
+            if(!kataKunci) { res.classList.add('d-none'); def.classList.remove('d-none'); return; }
+            res.classList.remove('d-none'); def.classList.add('d-none');
+            const query = kataKunci.toLowerCase();
+            const hasil = daftarProdukGlobal.filter(p => p.nama.toLowerCase().includes(query));
+            let html = "";
+            hasil.forEach(data => {
+                let img = data.gambar ? `<img src="${data.gambar}">` : "📦";
+                html += `<div class="product-card" onclick="tambahKeKeranjang('${data.id}', '${data.nama}', ${data.harga}, ${data.stok})"><div class="grid-product-img">${img}</div><div style="font-size:11px; font-weight:bold;">${data.nama}</div><div style="font-size:12px; color:var(--primary-blue); font-weight:bold;">Rp${data.harga.toLocaleString('id-ID')}</div></div>`;
+            });
+            res.innerHTML = html || "<p style='grid-column: span 3; text-align:center;'>Tidak ditemukan.</p>";
+        }
+
+        function hitungValuasi() {
+            let mod = 0; let jual = 0;
+            daftarProdukGlobal.forEach(p => { if(p.stok > 0) { mod += (p.stok * (p.hargaBeli||0)); jual += (p.stok * (p.harga||0)); } });
+            if(document.getElementById('valModal')) document.getElementById('valModal').innerText = "Rp " + mod.toLocaleString('id-ID');
+            if(document.getElementById('valJual')) document.getElementById('valJual').innerText = "Rp " + jual.toLocaleString('id-ID');
+        }
+
+        function bukaManajemen() { toggleSidebar(); document.getElementById('dashboardSection').classList.add('d-none'); document.getElementById('manajemenSection').classList.remove('d-none'); }
+        function tutupManajemen() { document.getElementById('manajemenSection').classList.add('d-none'); document.getElementById('dashboardSection').classList.remove('d-none'); }
+        
+        function bukaTambahBarang() {
+            editProductId = null; produkgambarRawBase64 = "";
+            document.getElementById('inputNama').value = ""; document.getElementById('inputKategori').value = ""; document.getElementById('inputStok').value = "0"; document.getElementById('inputHargaBeli').value = "0"; document.getElementById('inputHarga').value = "0";
+            document.getElementById('productImgPreview').style.display = 'none'; document.getElementById('productImgPlaceholder').style.display = 'block';
+            document.getElementById('titleFormBarang').innerText = "Tambah Barang";
+            document.getElementById('manajemenSection').classList.add('d-none'); document.getElementById('tambahBarangSection').classList.remove('d-none');
+        }
+        function tutupTambahBarang() { document.getElementById('tambahBarangSection').classList.add('d-none'); document.getElementById('manajemenSection').classList.remove('d-none'); }
+
+        function bukaEditBarang(id) {
+            const p = daftarProdukGlobal.find(x => x.id === id); if(!p) return; editProductId = p.id;
+            document.getElementById('inputNama').value = p.nama; document.getElementById('inputKategori').value = p.kategori || ""; document.getElementById('inputStok').value = p.stok; document.getElementById('inputHargaBeli').value = p.hargaBeli || 0; document.getElementById('inputHarga').value = p.harga;
+            produkgambarRawBase64 = p.gambar || "";
+            if(produkgambarRawBase64) { document.getElementById('productImgPreview').src = produkgambarRawBase64; document.getElementById('productImgPreview').style.display = 'block'; document.getElementById('productImgPlaceholder').style.display = 'none'; }
+            document.getElementById('titleFormBarang').innerText = "Edit Barang";
+            document.getElementById('manajemenSection').classList.add('d-none'); document.getElementById('tambahBarangSection').classList.remove('d-none');
+        }
+
+        function simpanBarang() {
+            const n = document.getElementById('inputNama').value; const k = document.getElementById('inputKategori').value; const s = document.getElementById('inputStok').value; const hb = document.getElementById('inputHargaBeli').value; const hj = document.getElementById('inputHarga').value;
+            if(!n || !hj || !s) return Swal.fire("Gagal", "Nama, Stok, dan Harga Jual wajib diisi!", "warning");
+            const data = { nama: n, kategori: k, stok: parseInt(s), hargaBeli: parseInt(hb), harga: parseInt(hj), gambar: produkgambarRawBase64 };
+            if(editProductId) { db.ref('users/' + auth.currentUser.uid + '/produk/' + editProductId).update(data).then(tutupTambahBarang); } 
+            else { db.ref('users/' + auth.currentUser.uid + '/produk').push(data).then(tutupTambahBarang); }
+        }
+
+        function hapusBarang(id) { Swal.fire({title: 'Hapus barang ini?', icon: 'warning', showCancelButton: true}).then((r) => { if (r.isConfirmed) db.ref('users/' + auth.currentUser.uid + '/produk/' + id).remove(); }); }
+
+        function prosesUploadGambarProduk(event) {
+            const file = event.target.files[0]; if(!file) return; const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image(); img.onload = function() {
+                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 300; canvas.height = 300;
+                    ctx.drawImage(img, 0, 0, 300, 300); produkgambarRawBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('productImgPreview').src = produkgambarRawBase64; document.getElementById('productImgPreview').style.display = 'block'; document.getElementById('productImgPlaceholder').style.display = 'none';
+                }; img.src = e.target.result;
+            }; reader.readAsDataURL(file);
+        }
+
+        // ==========================================
+        // FUNGSI PESANAN ONLINE (SISTEM OMS)
+        // ==========================================
+        let tabPesananAktif = 'baru';
+        function muatPesananOnline(uid) {
+            db.ref('users/' + uid + '/pesanan_online').on('value', snap => {
+                pesananOnlineGlobal = []; let countBaru = 0;
+                if(snap.exists()) {
+                    snap.forEach(child => {
+                        let d = child.val(); d.id = child.key;
+                        if(d.status !== 'Selesai') pesananOnlineGlobal.push(d);
+                        if(d.status === 'Baru') countBaru++;
+                    });
+                }
+                pesananOnlineGlobal.reverse();
+                
+                const badge = document.getElementById('notifBadge');
+                if(countBaru > 0) { badge.innerText = countBaru; badge.classList.remove('d-none'); } else { badge.classList.add('d-none'); }
+                
+                const sideBadge = document.getElementById('sideNotifBadge');
+                if(sideBadge) {
+                    if(countBaru > 0) { 
+                        sideBadge.innerText = countBaru + " Baru"; 
+                        sideBadge.classList.remove('d-none'); 
+                    } else { 
+                        sideBadge.classList.add('d-none'); 
+                    }
+                }
+
+                if(document.getElementById('onlineOrderOverlay').classList.contains('active')) renderPesananOnline();
+            });
+        }
+
+        function bukaPesananOnline() { document.getElementById('onlineOrderOverlay').classList.add('active'); renderPesananOnline(); }
+        function tutupPesananOnline() { document.getElementById('onlineOrderOverlay').classList.remove('active'); }
+        function gantiTabPesananOnline(tab) {
+            tabPesananAktif = tab;
+            document.getElementById('tabPesananBaru').classList.remove('active'); document.getElementById('tabPesananProses').classList.remove('active');
+            if(tab === 'baru') document.getElementById('tabPesananBaru').classList.add('active'); else document.getElementById('tabPesananProses').classList.add('active');
+            renderPesananOnline();
+        }
+
+        function renderPesananOnline() {
+            const list = document.getElementById('listPesananOnlineContainer'); list.innerHTML = "";
+            let dataFilter = pesananOnlineGlobal.filter(p => p.status.toLowerCase() === tabPesananAktif);
+            if(dataFilter.length === 0) { list.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-weight:bold;">Tidak ada pesanan ${tabPesananAktif}.</div>`; return; }
+            
+            dataFilter.forEach(p => {
+                let itemsHtml = p.items.map(i => `<b>${i.qty}x</b> ${i.nama}`).join('<br>');
+                let actionBtns = tabPesananAktif === 'baru' 
+                    ? `<button onclick="lanjutKasirOnline('${p.id}')" style="flex:2; background:var(--primary-blue); color:white; border:none; padding:10px; border-radius:6px; font-weight:bold;">Lanjut Kasir</button>` 
+                    : `<button onclick="selesaiPesananOnline('${p.id}')" style="flex:2; background:var(--primary-green); color:white; border:none; padding:10px; border-radius:6px; font-weight:bold;">Pesanan Selesai (Sampai)</button>`;
+                
+                list.innerHTML += `<div style="background:white; padding:15px; border-radius:8px; margin-bottom:12px; border:1px solid #E5E7EB;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span style="font-weight:bold; color:var(--primary-blue);">${p.pelanggan.nama}</span><span style="font-weight:bold;">Rp${(p.total||0).toLocaleString('id-ID')}</span></div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">📞 ${p.pelanggan.telp} | 🕒 ${p.waktu}</div>
+                        <div style="font-size:12px; background:#F3F4F6; padding:8px; border-radius:4px; margin-bottom:10px;">📍 ${p.pelanggan.alamat}</div>
+                        <div style="font-size:12px; border-left:3px solid var(--primary-purple); padding-left:8px; margin-bottom:12px;">📦 Item:<br>${itemsHtml}</div>
+                        <div style="display:flex; gap:10px;">${actionBtns} <button onclick="hapusPesananOnline('${p.id}')" style="background:#FEE2E2; color:var(--primary-red); border:none; padding:10px; border-radius:6px; font-weight:bold;">Hapus</button></div>
+                    </div>`;
+            });
+        }
+
+        function lanjutKasirOnline(id) {
+            const p = pesananOnlineGlobal.find(x => x.id === id); if(!p) return;
+            keranjang = p.items || [];
+            pelangganAktif = { id: 'online', nama: p.pelanggan.nama, telp: p.pelanggan.telp, alamat: p.pelanggan.alamat };
+            db.ref('users/' + auth.currentUser.uid + '/pesanan_online/' + id).update({status: 'Diproses'});
+            tutupPesananOnline(); document.getElementById('kasirPelangganInfo').classList.remove('d-none');
+            document.getElementById('kasirPelangganLabel').innerText = "Online: " + p.pelanggan.nama;
+            updateTampilanKasir(); bukaKeranjang();
+        }
+        function selesaiPesananOnline(id) { Swal.fire({ title: 'Paket sudah sampai?', showCancelButton: true }).then((r) => { if (r.isConfirmed) db.ref('users/' + auth.currentUser.uid + '/pesanan_online/' + id).update({status: 'Selesai'}); }); }
+        function hapusPesananOnline(id) { Swal.fire({ title: 'Hapus pesanan ini?', icon:'warning', showCancelButton: true }).then((r) => { if (r.isConfirmed) db.ref('users/' + auth.currentUser.uid + '/pesanan_online/' + id).remove(); }); }
+
+        // ==========================================
+        // FUNGSI KASIR & TRANSAKSI
+        // ==========================================
+        function bukaKeranjang() { document.getElementById('dashboardSection').classList.add('d-none'); document.getElementById('viewKasir').classList.remove('d-none'); }
+        function tutupKasir() { document.getElementById('viewKasir').classList.add('d-none'); document.getElementById('dashboardSection').classList.remove('d-none'); }
+        
+        function tambahKeKeranjang(id, nama, harga, stok) {
+            if(stok <= 0) return Swal.fire("Maaf", "Stok habis!", "error");
+            let i = keranjang.find(x => x.id === id);
+            if(i) { if(i.qty >= stok) return Swal.fire("Oops", "Stok tidak cukup!", "warning"); i.qty++; } else { keranjang.push({id, nama, harga, stok, qty: 1}); }
+            updateTampilanKasir();
+        }
+
+        function updateTampilanKasir() {
+            const list = document.getElementById('keranjangList'); list.innerHTML = ""; let total = 0; let qty = 0;
+            keranjang.forEach((item) => { 
+                let sub = item.harga * item.qty; total += sub; qty += item.qty; 
+                list.innerHTML += `<div style="padding:15px; border-bottom:1px solid #eee;">
+                    <div style="font-weight:600; font-size:14px;">${item.nama}</div>
+                    <div style="display:flex; justify-content:space-between; font-size:13px; margin-top:5px;"><span><b style="color:var(--primary-green);">${item.qty} x</b> ${item.harga.toLocaleString('id-ID')}</span><b>Rp${sub.toLocaleString('id-ID')}</b></div>
+                </div>`; 
+            });
+            document.getElementById('totalVal').innerText = "Rp" + total.toLocaleString('id-ID');
+            document.getElementById('headerCartBadge').innerText = qty; document.getElementById('headerCartBadge').classList.toggle('d-none', qty===0);
+        }
+
+        function bukaPayment() {
+            if(keranjang.length === 0) return Swal.fire("Oops", "Keranjang kosong!", "warning");
+            totalBayarAktif = keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+            document.getElementById('inputOngkir').value = ""; ongkirAktif = 0; document.getElementById('inputUangDiterima').value = ""; document.getElementById('payKembalian').innerText = "Rp 0";
+            document.getElementById('payTotalTagihan').innerText = "Rp " + totalBayarAktif.toLocaleString('id-ID');
+            document.getElementById('paymentOverlay').classList.add('active');
+        }
+        function tutupPayment() { document.getElementById('paymentOverlay').classList.remove('active'); }
+        function hitungTotalAkhir() { ongkirAktif = parseInt(document.getElementById('inputOngkir').value) || 0; document.getElementById('payTotalTagihan').innerText = "Rp " + (totalBayarAktif + ongkirAktif).toLocaleString('id-ID'); hitungKembalian(); }
+        function hitungKembalian() { let t = totalBayarAktif + ongkirAktif; let u = parseInt(document.getElementById('inputUangDiterima').value) || 0; let k = u - t; let el = document.getElementById('payKembalian'); if(k < 0) { el.innerText = "Kurang Rp " + Math.abs(k).toLocaleString('id-ID'); el.style.color = "var(--primary-red)"; } else { el.innerText = "Rp " + k.toLocaleString('id-ID'); el.style.color = "var(--primary-green)"; } }
+
+        function konfirmasiPembayaran() {
+            let t = totalBayarAktif + ongkirAktif; let u = parseInt(document.getElementById('inputUangDiterima').value) || 0;
+            if (u < t) return Swal.fire("Kurang", "Uang diterima kurang dari total tagihan!", "warning");
+            let kembalian = u - t; const user = auth.currentUser; tutupPayment();
+            
+            keranjang.forEach(item => { db.ref('users/' + user.uid + '/produk/' + item.id).update({ stok: item.stok - item.qty }); });
+            
+            db.ref('users/' + user.uid + '/transaksi').push({ tanggal: new Date().toLocaleDateString('id-ID'), waktu: new Date().toLocaleString('id-ID'), total: t, ongkir: ongkirAktif, uangDiterima: u, kembalian: kembalian, items: keranjang, pelanggan: pelangganAktif, timestamp: firebase.database.ServerValue.TIMESTAMP });
+            
+            Swal.fire({ title: 'Sukses!', text: 'Transaksi berhasil disimpan.', icon: 'success' });
+            keranjang = []; updateTampilanKasir(); tutupKasir(); hapusPelangganAktif();
+        }
+
+        // ==========================================
+        // FUNGSI LAINNYA (Laporan, Cetak, Profil)
+        // ==========================================
+        function muatDataLaporan(uid) {
+            db.ref('users/' + uid + '/transaksi').on('value', snap => {
+                let totalHrIni = 0; let html = ""; const tgl = new Date().toLocaleDateString('id-ID'); daftarTransaksiGlobal = [];
+                if(snap.exists()) {
+                    snap.forEach(c => { let d = c.val(); d.id = c.key; daftarTransaksiGlobal.push(d); });
+                    daftarTransaksiGlobal.reverse().forEach(d => {
+                        if(d.tanggal === tgl) {
+                            totalHrIni += d.total; let p = d.pelanggan ? d.pelanggan.nama : "Umum"; let j = d.waktu.split(' ')[1] || d.waktu;
+                            html += `<div onclick="bukaDetailTransaksi('${d.id}')" style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; border-left:4px solid var(--primary-green); cursor:pointer;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>${j}</b><b style="color:var(--primary-blue);">Rp${d.total.toLocaleString('id-ID')}</b></div>
+                                <div style="font-size:12px; color:var(--text-muted);">Pelanggan: ${p}</div>
+                            </div>`;
+                        }
+                    });
+                }
+                document.getElementById('laporanTotalHariIni').innerText = "Rp " + totalHrIni.toLocaleString('id-ID');
+                document.getElementById('listTransaksiHariIni').innerHTML = html || "<p style='text-align:center; color:#999;'>Belum ada transaksi hari ini.</p>";
+            });
+        }
+
+        function bukaDetailTransaksi(id) {
+            const trx = daftarTransaksiGlobal.find(t => t.id === id); if(!trx) return;
+            let itemHtml = trx.items.map(i => `<div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>${i.qty}x ${i.nama}</span><b>Rp${(i.qty*i.harga).toLocaleString('id-ID')}</b></div>`).join('');
+            Swal.fire({
+                title: 'Rincian Transaksi',
+                html: `<div style="text-align:left; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px; font-size:13px;"><b>Waktu:</b> ${trx.waktu}<br><b>Pelanggan:</b> ${trx.pelanggan?trx.pelanggan.nama:'Umum'}</div>
+                <div style="background:#F3F4F6; padding:10px; border-radius:6px; margin-bottom:10px;">${itemHtml}</div>
+                <div style="text-align:left; font-size:13px;">
+                    <div style="display:flex; justify-content:space-between;"><span>Ongkir:</span><b>Rp${(trx.ongkir||0).toLocaleString('id-ID')}</b></div>
+                    <div style="display:flex; justify-content:space-between; color:var(--primary-blue); font-size:15px; margin-top:5px;"><span><b>Total:</b></span><b>Rp${trx.total.toLocaleString('id-ID')}</b></div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+                    <button onclick="Swal.close(); prosesCetakStruk('${trx.id}')" style="background:#3B82F6; color:white; padding:10px; border:none; border-radius:6px; font-weight:bold;">🖨️ Cetak Struk (Thermal)</button>
+                    <button onclick="Swal.close(); prosesSimpanPDF('${trx.id}')" style="background:#EF4444; color:white; padding:10px; border:none; border-radius:6px; font-weight:bold;">📄 Simpan PDF</button>
+                    <button onclick="Swal.close(); bukaMenuCetakLabel('${trx.id}')" style="background:var(--warning-color); color:white; padding:10px; border:none; border-radius:6px; font-weight:bold;">🏷️ Cetak Label Alamat</button>
+                    <button onclick="Swal.close(); window.open('https://cekresi.com/', '_blank')" style="background:var(--primary-purple); color:white; padding:10px; border:none; border-radius:6px; font-weight:bold;">🚚 Lacak Resi Ekspedisi</button>
+                </div>`,
+                showConfirmButton: false, showCancelButton: true, cancelButtonText: 'Tutup'
+            });
+        }
+
+        // ==========================================
+        // FUNGSI RENDER STRUK THERMAL DAN SIMPAN PDF
+        // ==========================================
+        function generateHTMLStruk(trx) {
+            let nToko = namaTokoGlobal || "Toko Saya";
+            let alToko = alamatTokoGlobal || "";
+            let tlpToko = teleponTokoGlobal || "";
+            
+            // Nama kasir diambil hanya bagian sebelum @
+            let namaKasir = auth.currentUser ? auth.currentUser.email.split('@')[0] : 'Admin';
+            
+            let itemHtml = trx.items.map(i => `
+                <div style="margin-bottom: 5px;">
+                    <div style="word-break: break-word;">${i.nama}</div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>${i.qty} x ${i.harga.toLocaleString('id-ID')}</span>
+                        <span>${(i.qty * i.harga).toLocaleString('id-ID')}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            return `
+                <div style="width: 200px; padding: 5px; box-sizing: border-box; font-family: monospace; font-size: 11px; color: black; background: white; margin: 0 auto;">
+                    <div style="text-align:center; margin-bottom:10px;">
+                        <strong style="font-size:14px;">${nToko}</strong><br>
+                        ${alToko ? alToko + '<br>' : ''}
+                        ${tlpToko ? tlpToko + '<br>' : ''}
+                        --------------------------------
+                    </div>
+                    <div style="margin-bottom:10px; word-break: break-all;">
+                        Waktu: ${trx.waktu}<br>
+                        TrxID: ${trx.id.substring(0,8)}<br>
+                        Kasir: ${namaKasir}<br>
+                        Plgn : ${trx.pelanggan ? trx.pelanggan.nama : 'Umum'}
+                    </div>
+                    <div>--------------------------------</div>
+                    <div style="margin-bottom:10px;">
+                        ${itemHtml}
+                    </div>
+                    <div>--------------------------------</div>
+                    <div style="display:flex; justify-content:space-between;"><span>Subtotal:</span><span>${(trx.total - (trx.ongkir||0)).toLocaleString('id-ID')}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Ongkir:</span><span>${(trx.ongkir||0).toLocaleString('id-ID')}</span></div>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top:5px;"><span>Total:</span><span>${trx.total.toLocaleString('id-ID')}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Tunai:</span><span>${(trx.uangDiterima||0).toLocaleString('id-ID')}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Kembali:</span><span>${(trx.kembalian||0).toLocaleString('id-ID')}</span></div>
+                    <div style="text-align:center; margin-top:15px; word-break: break-word;">
+                        Terima Kasih<br>Silakan Datang Kembali
+                    </div>
+                </div>
+            `;
+        }
+
+        function prosesCetakStruk(id) {
+            const trx = daftarTransaksiGlobal.find(t => t.id === id); if(!trx) return;
+            const areaStruk = document.getElementById('area-cetak-struk');
+            
+            // Isi HTML struk ke dalam div tersembunyi
+            areaStruk.innerHTML = generateHTMLStruk(trx);
+            
+            // Tampilkan sementara hanya untuk dicetak
+            areaStruk.classList.remove('d-none');
+            window.print();
+            
+            // Sembunyikan kembali setelah dialog print muncul
+            areaStruk.classList.add('d-none');
+        }
+
+        function prosesSimpanPDF(id) {
+            const trx = daftarTransaksiGlobal.find(t => t.id === id); 
+            if(!trx) return;
+
+            // Tidak perlu lagi pakai elemen tersembunyi di HTML
+            const kontenStruk = generateHTMLStruk(trx);
+            const el = document.createElement('div');
+            el.innerHTML = kontenStruk;
+
+            // Perbaikan: Margin di-set 0 dan area tangkapan dikunci di 210px
+            const opt = {
+                margin:       0,
+                filename:     'Struk_' + id.substring(0,8) + '.pdf',
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { scale: 2, useCORS: true, width: 210 }, 
+                jsPDF:        { unit: 'mm', format: [58, 150], orientation: 'portrait' } 
+            };
+
+            Swal.fire({
+                title: 'Menyiapkan PDF...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            html2pdf().set(opt).from(el).save().then(() => {
+                Swal.fire("Berhasil", "File PDF struk berhasil didownload!", "success");
+            }).catch((err) => {
+                Swal.fire("Gagal", "Terjadi kesalahan saat membuat PDF", "error");
+            });
+        }
+
+        function bukaMenuCetakLabel(id) {
+            const trx = daftarTransaksiGlobal.find(t => t.id === id); if(!trx) return;
+            let n = trx.pelanggan ? trx.pelanggan.nama : ''; let tl = trx.pelanggan ? trx.pelanggan.telp||'' : ''; let al = trx.pelanggan ? trx.pelanggan.alamat||'' : '';
+            Swal.fire({
+                title: 'Data Label Pengiriman',
+                html: `<div style="text-align:left; font-size:13px;">
+                    <label>Nama Penerima</label><input type="text" id="lblNama" value="${n}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:10px;">
+                    <label>No. Telp</label><input type="text" id="lblTelp" value="${tl}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:10px;">
+                    <label>Alamat Lengkap</label><textarea id="lblAlamat" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" rows="3">${al}</textarea>
+                </div>`,
+                showCancelButton: true, confirmButtonText: 'Cetak Label Thermal', confirmButtonColor: 'var(--primary-green)',
+                preConfirm: () => {
+                    let pn = document.getElementById('lblNama').value; let pa = document.getElementById('lblAlamat').value;
+                    if(!pn || !pa) { Swal.showValidationMessage("Nama dan Alamat wajib diisi!"); return false; }
+                    return { nama: pn, telp: document.getElementById('lblTelp').value, alamat: pa };
+                }
+            }).then(r => { if(r.isConfirmed) { alert("Menyiapkan cetakan thermal untuk " + r.value.nama + "... (Pastikan koneksi printer bluetooth aktif)"); } });
+        }
+
+        // --- FUNGSI PROFIL & PENGATURAN TOKO ---
+        let logoTokoRawBase64 = "";
+        let bankTokoGlobal = "";
+        let rekTokoGlobal = "";
+        let anTokoGlobal = "";
+
+        function muatProfilToko(uid) { 
+            db.ref('users/'+uid).on('value', snap => { 
+                if(snap.exists()) { 
+                    let d = snap.val(); 
+                    namaTokoGlobal = d.shopName || "Toko Saya"; 
+                    teleponTokoGlobal = d.telepon || ""; 
+                    alamatTokoGlobal = d.alamat || ""; 
+                    logoTokoGlobal = d.logo || "";
+                    
+                    // Muat data bank
+                    bankTokoGlobal = d.bank || "";
+                    rekTokoGlobal = d.rekening || "";
+                    anTokoGlobal = d.atasNama || "";
+                    
+                    document.getElementById('shopTitleText').innerText = namaTokoGlobal; 
+                    document.getElementById('sideShopName').innerText = namaTokoGlobal; 
+
+                    // Update Semua Logo Dinamis (di Sidebar dan semua Header)
+                    if(logoTokoGlobal) {
+                        document.getElementById('sideStoreLogo').src = logoTokoGlobal;
+                        document.getElementById('sideStoreLogo').style.display = 'block';
+                        document.getElementById('sideStoreIcon').style.display = 'none';
+
+                        document.getElementById('logoHeaderMain').src = logoTokoGlobal;
+                        document.querySelectorAll('.dyn-logo').forEach(img => { img.src = logoTokoGlobal; });
+                    } else {
+                        // Jika tidak ada logo, set ke logo aplikasi default
+                        let defaultLogo = "https://ui-avatars.com/api/?name=POS&background=fff&color=3B82F6&rounded=true&bold=true";
+                        document.getElementById('logoHeaderMain').src = defaultLogo;
+                        document.querySelectorAll('.dyn-logo').forEach(img => { img.src = defaultLogo; });
+                    }
+                } 
+            }); 
+        }
+
+        function bukaProfilToko() {
+            toggleSidebar();
+            document.getElementById('inputNamaToko').value = namaTokoGlobal;
+            document.getElementById('inputWaToko').value = teleponTokoGlobal;
+            document.getElementById('inputAlamatToko').value = alamatTokoGlobal;
+            
+            // Isi data bank ke form
+            document.getElementById('inputBankToko').value = bankTokoGlobal;
+            document.getElementById('inputRekToko').value = rekTokoGlobal;
+            document.getElementById('inputAnToko').value = anTokoGlobal;
+            
+            if (logoTokoGlobal) {
+                document.getElementById('storeLogoPreview').src = logoTokoGlobal;
+                document.getElementById('storeLogoPreview').style.display = 'block';
+                document.getElementById('storeLogoPlaceholder').style.display = 'none';
+                logoTokoRawBase64 = logoTokoGlobal;
+            } else {
+                document.getElementById('storeLogoPreview').style.display = 'none';
+                document.getElementById('storeLogoPlaceholder').style.display = 'block';
+                logoTokoRawBase64 = "";
+            }
+
+            document.getElementById('dashboardSection').classList.add('d-none');
+            document.getElementById('profilSection').classList.remove('d-none');
+        }
+
+        function tutupProfilToko() {
+            document.getElementById('profilSection').classList.add('d-none');
+            document.getElementById('dashboardSection').classList.remove('d-none');
+        }
+
+        function prosesUploadLogoToko(event) {
+            const file = event.target.files[0]; if(!file) return; const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image(); img.onload = function() {
+                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 300; canvas.height = 300;
+                    ctx.drawImage(img, 0, 0, 300, 300); logoTokoRawBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    document.getElementById('storeLogoPreview').src = logoTokoRawBase64; 
+                    document.getElementById('storeLogoPreview').style.display = 'block'; 
+                    document.getElementById('storeLogoPlaceholder').style.display = 'none';
+                }; img.src = e.target.result;
+            }; reader.readAsDataURL(file);
+        }
+
+        function simpanProfilToko() {
+            const n = document.getElementById('inputNamaToko').value;
+            const w = document.getElementById('inputWaToko').value;
+            const a = document.getElementById('inputAlamatToko').value;
+            
+            // Ambil data bank dari form
+            const b = document.getElementById('inputBankToko').value;
+            const r = document.getElementById('inputRekToko').value;
+            const an = document.getElementById('inputAnToko').value;
+            
+            if(!n) return Swal.fire("Gagal", "Nama Toko wajib diisi!", "warning");
+            
+            Swal.fire({title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+            
+            // Simpan juga data bank ke database
+            db.ref('users/' + auth.currentUser.uid).update({
+                shopName: n,
+                telepon: w,
+                alamat: a,
+                logo: logoTokoRawBase64,
+                bank: b,
+                rekening: r,
+                atasNama: an
+            }).then(() => {
+                Swal.fire("Berhasil", "Profil toko diperbarui", "success");
+                tutupProfilToko();
+            }).catch(e => Swal.fire("Error", e.message, "error"));
+        }
+
+        function bagikanLinkToko() { const url = "https://nofer2010.github.io/pos-web-multi/shop.html?id=" + auth.currentUser.uid; navigator.clipboard.writeText(url).then(()=>Swal.fire("Link Disalin!", "Kirimkan link ini ke pelanggan Anda:\n\n" + url, "success")); }
+        function hapusPelangganAktif() { pelangganAktif = null; document.getElementById('kasirPelangganInfo').classList.add('d-none'); }
+        function bukaPengaturanPrinter() { Swal.fire("Info", "Untuk cetak struk dari Transaksi Hari Ini, sambungkan device ke printer Thermal via Bluetooth terlebih dahulu (pairing), lalu klik 'Cetak Struk (Thermal)' dari Rincian Transaksi.", "info"); }
+    </script>
+</body>
+</html>
