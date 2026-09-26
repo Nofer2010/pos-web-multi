@@ -3,84 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Katalog Toko</title>
+    <title>Katalog Toko Online</title>
     
-    <!-- Logo Aplikasi (Favicon) -->
-    <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=Toko&background=3B82F6&color=fff&rounded=true&bold=true">
-    
+    <link rel="icon" type="image/png" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        body { background-color: #F8F9FA; margin: 0; font-family: 'Inter', sans-serif; padding-bottom: 90px; }
+        body { background-color: #F9FAFB; margin: 0; font-family: 'Inter', sans-serif; padding-bottom: 90px; color: #374151; }
+        .main-wrapper { max-width: 1024px; margin: 0 auto; background: #fff; min-height: 100vh; box-shadow: 0 0 25px rgba(0,0,0,0.03); }
         
-        /* HEADER STYLE */
-        .header-blue { background-color: #3B82F6; color: white; padding: 30px 20px 25px 20px; text-align: center; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; box-shadow: 0 4px 10px rgba(59,130,246,0.2); position: relative; }
-        .logo-circle { width: 75px; height: 75px; background: white; border-radius: 50%; margin: 0 auto 10px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; font-size: 35px; }
+        .header-blue { 
+            background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%); 
+            color: white; 
+            padding: 40px 20px 30px 20px; 
+            text-align: center; 
+            border-bottom-left-radius: 30px; 
+            border-bottom-right-radius: 30px; 
+            box-shadow: 0 10px 25px rgba(59,130,246,0.15); 
+            position: relative;
+            overflow: hidden;
+        }
+        .logo-circle { width: 85px; height: 85px; background: white; border-radius: 50%; margin: 0 auto 15px; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 15px rgba(0,0,0,0.2); overflow: hidden; font-size: 35px; border: 3px solid rgba(255,255,255,0.5); z-index: 2; position: relative; }
         .logo-circle img { width: 100%; height: 100%; object-fit: cover; }
-        .shop-name { font-size: 18px; font-weight: 700; margin: 5px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .shop-greeting { font-size: 12px; font-weight: 400; margin-bottom: 20px; opacity: 0.9; }
+        .shop-name { font-size: 22px; font-weight: 800; margin: 5px 0; text-transform: uppercase; letter-spacing: 0.8px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); position: relative; z-index: 2;}
+        .shop-greeting { font-size: 13px; font-weight: 500; margin-bottom: 25px; opacity: 0.9; position: relative; z-index: 2;}
         
-        /* SEARCH BAR */
-        .search-container { background: white; border-radius: 25px; padding: 12px 15px; display: flex; align-items: center; color: #6B7280; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .search-container input { border: none; outline: none; width: 100%; font-size: 13px; margin-left: 8px; font-family: 'Inter', sans-serif; }
+        .search-container { background: rgba(255,255,255,0.95); border-radius: 30px; padding: 14px 20px; display: flex; align-items: center; color: #4B5563; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 550px; margin: 0 auto; position: relative; z-index: 2; border: 1px solid rgba(255,255,255,0.5);}
+        .search-container input { border: none; outline: none; width: 100%; font-size: 14px; margin-left: 10px; font-family: 'Inter', sans-serif; background: transparent; }
         
-        /* KATEGORI & GRID PRODUK */
-        .category-title { color: #3B82F6; font-size: 14px; font-weight: 700; text-transform: uppercase; margin: 25px 20px 10px; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB; }
-        .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 0 20px; }
+        .category-title { color: #1E3A8A; font-size: 16px; font-weight: 800; text-transform: uppercase; margin: 35px 20px 15px; padding-bottom: 8px; border-bottom: 2px solid #EFF6FF; display: flex; align-items: center; gap: 8px;}
+        .category-title::before { content: ''; display: inline-block; width: 4px; height: 18px; background: #3B82F6; border-radius: 4px; }
         
-        /* KARTU PRODUK */
-        .product-card { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); text-align: center; display: flex; flex-direction: column; justify-content: space-between;}
-        .product-img { background: #F3F4F6; border-radius: 8px; height: 110px; display: flex; align-items: center; justify-content: center; font-size: 45px; margin-bottom: 12px; overflow: hidden;}
-        .product-img img { width: 100%; height: 100%; object-fit: cover; }
-        .product-name { font-size: 13px; font-weight: 600; color: #1F2937; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .product-price { font-size: 14px; font-weight: 700; color: #3B82F6; margin-bottom: 2px; }
-        .product-stock { font-size: 10px; color: #6B7280; margin-bottom: 12px; }
-        
-        /* KONTROL QTY (- +) */
-        .qty-control { display: flex; justify-content: space-between; align-items: center; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: auto; }
-        .qty-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 6px; color: #3B82F6; font-weight: bold; font-size: 16px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
-        .qty-value { font-weight: 700; font-size: 14px; width: 30px; text-align: center; color: #1F2937; }
-        
-        /* BOTTOM BAR */
-        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 50; transition: transform 0.3s ease; }
-        .bottom-bar.hidden { transform: translateY(100%); }
-        .bb-info { display: flex; flex-direction: column; }
-        .bb-items { font-size: 12px; color: #6B7280; font-weight: 600; margin-bottom: 2px; }
-        .bb-total { font-size: 18px; font-weight: 700; color: #3B82F6; }
-        .btn-pesan { background: #10B981; color: white; border: none; padding: 12px 24px; border-radius: 25px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+        .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 0 20px; }
+        @media (min-width: 600px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 900px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
 
-        /* MODAL CHECKOUT */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
-        .modal-box { background: white; width: 100%; max-width: 500px; border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 25px 20px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .product-card { background: white; border: 1px solid #F3F4F6; border-radius: 16px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); text-align: center; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s; }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .product-img { background: #F8FAFC; border-radius: 12px; height: 130px; display: flex; align-items: center; justify-content: center; font-size: 45px; margin-bottom: 15px; overflow: hidden; }
+        .product-img img { width: 100%; height: 100%; object-fit: cover; }
+        .product-name { font-size: 14px; font-weight: 700; color: #1F2937; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .product-price { font-size: 15px; font-weight: 800; color: #3B82F6; margin-bottom: 4px; }
+        .product-stock { font-size: 11px; color: #9CA3AF; margin-bottom: 15px; font-weight: 500; }
         
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 12px; font-weight: 600; color: #4B5563; margin-bottom: 5px; }
-        .input-group input, .input-group textarea { width: 100%; padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; font-family: 'Inter', sans-serif;}
-        .btn-kirim { background: #10B981; color: white; width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        .qty-control { display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-radius: 10px; padding: 6px; margin-top: auto; border: 1px solid #F1F5F9; }
+        .qty-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 8px; color: #3B82F6; font-weight: bold; font-size: 18px; border: 1px solid #E5E7EB; cursor: pointer; user-select: none; }
+        .qty-value { font-weight: 700; font-size: 15px; width: 36px; text-align: center; color: #111827; }
+
+        .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 1024px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-top-left-radius: 24px; border-top-right-radius: 24px; box-shadow: 0 -8px 25px rgba(0,0,0,0.1); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 50; transition: transform 0.4s; }
+        .bottom-bar.hidden { transform: translate(-50%, 120%); }
+        .bb-items { font-size: 13px; color: #6B7280; font-weight: 600; margin-bottom: 2px; }
+        .bb-total { font-size: 20px; font-weight: 800; color: #1E3A8A; }
+        .btn-pesan { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none; padding: 14px 28px; border-radius: 30px; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17, 24, 39, 0.6); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
+        .modal-box { background: white; width: 100%; max-width: 600px; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 30px 24px; max-height: 85vh; overflow-y: auto; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 8px; }
+        .input-group input, .input-group textarea { width: 100%; padding: 14px; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 14px; outline: none; box-sizing: border-box; background: #F9FAFB;}
+        .btn-kirim { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 800; font-size: 16px; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
+<div class="main-wrapper">
     <div class="header-blue">
-        <div class="logo-circle" id="shopLogoContainer">
-            <span id="shopIcon">🏪</span>
-        </div>
+        <div class="logo-circle" id="shopLogoContainer"><i class="fa-solid fa-store" style="color: #3B82F6;"></i></div>
         <div class="shop-name" id="shopName">MEMUAT TOKO...</div>
-        <div class="shop-greeting">Selamat datang di toko kami</div>
+        <div class="shop-greeting">Selamat datang di katalog online kami</div>
         
         <div class="search-container">
-            <span>🔍</span>
+            <i class="fa-solid fa-magnifying-glass" style="color: #9CA3AF; font-size: 16px;"></i>
             <input type="text" id="searchInput" placeholder="Cari nama produk atau kategori..." oninput="jalankanPencarian()">
         </div>
     </div>
-
-    <div id="mainContent" style="padding-bottom: 20px;">
-        <p style="text-align:center; margin-top:50px; color:#6B7280; font-size:14px;">Memuat data produk...</p>
+    <div id="shopFrontFilterContainer" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;">
+    <!-- Diisi dinamis oleh JS -->
+</div>
+  
+    <div id="mainContent" style="padding: 20px; text-align: center;">
+        <p style="color:#6B7280; font-size:14px;">Memuat data produk...</p>
     </div>
 
     <div class="bottom-bar hidden" id="bottomBar">
@@ -88,20 +92,20 @@
             <div class="bb-items" id="bbItems">0 Barang</div>
             <div class="bb-total" id="bbTotal">Rp 0</div>
         </div>
-        <button class="btn-pesan" onclick="bukaModalCheckout()">Pesan (WA)</button>
+        <button class="btn-pesan" onclick="bukaModalCheckout()">Pesan Sekarang</button>
     </div>
 
     <div class="modal-overlay" id="checkoutModal">
         <div class="modal-box">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3 style="color:#1F2937; font-size:18px; margin:0;">Rincian Pesanan</h3>
-                <span style="font-size:20px; cursor:pointer; color:#6B7280;" onclick="tutupModalCheckout()">❌</span>
+                <h3 style="color:#1F2937; font-size:18px; margin:0;">Rincian Pesanan Online</h3>
+                <span style="font-size:20px; cursor:pointer; color:#6B7280;" onclick="tutupModalCheckout()">✕</span>
             </div>
             
             <div id="rincianKeranjang" style="background:#F3F4F6; padding:15px; border-radius:12px; margin-bottom:15px; max-height:180px; overflow-y:auto;"></div>
             
             <div style="font-size:16px; font-weight:bold; margin-bottom:20px; display:flex; justify-content:space-between;">
-                <span>Total:</span> <span style="color:var(--primary-blue);" id="modalTotal">Rp 0</span>
+                <span>Total Belanja:</span> <span style="color:#3B82F6;" id="modalTotal">Rp 0</span>
             </div>
 
             <div id="infoTransferArea" style="display:none; background:#E0F2FE; border:1px dashed #3B82F6; padding:15px; border-radius:12px; margin-bottom:20px; font-size:13px; color:#1E3A8A; text-align:center;">
@@ -110,294 +114,256 @@
                 <div id="textAnToko" style="font-size:12px; opacity:0.8;"></div>
             </div>
 
-            <div class="input-group">
-                <label>Nama Lengkap</label>
-                <input type="text" id="cusNama" placeholder="Ketik nama Anda...">
-            </div>
-            <div class="input-group">
-                <label>No. WhatsApp Aktif</label>
-                <input type="tel" id="cusWa" placeholder="Contoh: 081234...">
-            </div>
-            <div class="input-group">
-                <label>Alamat Pengiriman</label>
-                <textarea id="cusAlamat" rows="2" placeholder="Nama Jalan, RT/RW, Kecamatan..."></textarea>
-            </div>
+            <div class="input-group"><label>Nama Lengkap *</label><input type="text" id="cusNama" placeholder="Ketik nama Anda..."></div>
+            <div class="input-group"><label>No. WhatsApp Aktif *</label><input type="tel" id="cusWa" placeholder="Contoh: 08123456789"></div>
+            <div class="input-group"><label>Alamat Pengiriman / Catatan *</label><textarea id="cusAlamat" rows="3" placeholder="Alamat lengkap atau catatan pesanan..."></textarea></div>
 
-            <button class="btn-kirim" onclick="prosesKirimPesanan()">Kirim Pesanan Sekarang</button>
+            <button class="btn-kirim" onclick="prosesKirimPesanan()">Kirim Pesanan Online</button>
         </div>
     </div>
+</div>
 
-    <script>
-        // INISIALISASI FIREBASE
-        const firebaseConfig = { apiKey: "AIzaSyAAj1F-zRcBOkPRL9wXg4skJ22UlbqXHw4", authDomain: "kasir-ferdi.firebaseapp.com", databaseURL: "https://kasir-ferdi-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "kasir-ferdi" };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const db = firebase.database();
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
-        // AMBIL ID ADMIN DARI URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminId = urlParams.get('id');
+    const firebaseConfig = {
+        apiKey: "AIzaSyBrLMd2i-YrVFsrkmOb3YhiIu6cIViq_54",
+        authDomain: "pos-web-multi.firebaseapp.com",
+        projectId: "pos-web-multi",
+        storageBucket: "pos-web-multi.firebasestorage.app",
+        messagingSenderId: "821848799063",
+        appId: "1:821848799063:web:e3cd428157c4fbaee8b012",
+        measurementId: "G-1PQ7YY3BXR"
+    };
 
-        let dataProdukGlobal = [];
-        let keranjangPembeli = [];
-        let adminPhone = "";
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminId = urlParams.get('id');
+
+    window.dataProdukGlobal = [];
+    window.keranjangPembeli = [];
+    window.adminPhone = ""; window.adminBank = ""; window.adminRek = ""; window.adminAn = "";
+
+    if (!adminId) {
+        document.getElementById('shopName').innerText = "LINK TIDAK LENGKAP";
+        document.getElementById('mainContent').innerHTML = "<div style='padding:40px; color:#ef4444; font-weight:bold;'>Parameter ID Toko tidak ditemukan pada URL.<br><small style='color:#6B7280;'>Gunakan link resmi yang dibagikan dari aplikasi kasir.</small></div>";
+    } else {
+        // Muat data profil toko admin
+        getDoc(doc(db, "tenants", adminId)).then(snap => {
+            if(snap.exists()) {
+                let data = snap.data();
+                let namaToko = data.shopName || "Toko Online";
+                document.getElementById('shopName').innerText = namaToko.toUpperCase();
+                
+                if(data.logo) {
+                    document.getElementById('shopLogoContainer').innerHTML = `<img src="${data.logo}" alt="Logo Toko">`;
+                }
+
+                if(data.telepon) {
+                    window.adminPhone = data.telepon.replace(/\D/g, '');
+                    if(window.adminPhone.startsWith('0')) window.adminPhone = '62' + window.adminPhone.substring(1);
+                }
+
+                if(data.bank && data.rekening) {
+                    window.adminBank = data.bank; window.adminRek = data.rekening; window.adminAn = data.atasNama || "";
+                    document.getElementById('textBankToko').innerText = `${window.adminBank} - ${window.adminRek}`;
+                    if(window.adminAn) document.getElementById('textAnToko').innerText = `a.n ${window.adminAn}`;
+                    document.getElementById('infoTransferArea').style.display = 'block';
+                }
+            } else {
+                document.getElementById('shopName').innerText = "TOKO TIDAK DITEMUKAN";
+                document.getElementById('mainContent').innerHTML = "<p style='color:#ef4444;'>Data toko tidak terdaftar.</p>";
+            }
+        });
+      // Render daftar filter kategori di Shop Front
+window.renderShopFrontCategoryFilter = function(selectedKat = 'Semua') {
+    const container = document.getElementById('shopFrontFilterContainer');
+    if (!container) return;
+
+    let categories = ['Semua', ...new Set((window.dataProdukGlobal || []).map(p => p.kategori).filter(Boolean))];
+
+    let html = '';
+    categories.forEach(kat => {
+        let isActive = kat === selectedKat;
+        html += `<div class="category-pill ${isActive ? 'active' : ''}" onclick="filterProdukShopFront('${kat}')">${kat}</div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+// Filter produk yang ditampilkan di Shop Front
+window.filterProdukShopFront = function(kategori) {
+    window.renderShopFrontCategoryFilter(kategori);
+    
+    // Filter data berdasarkan kategori
+    const filtered = (kategori === 'Semua') 
+        ? window.dataProdukGlobal 
+        : window.dataProdukGlobal.filter(p => p.kategori === kategori);
         
-        // Variabel untuk menampung data rekening toko
-        let adminBank = "";
-        let adminRek = "";
-        let adminAn = "";
+    // Jalankan fungsi render bawaan abang
+    if (typeof renderDaftarProduk === 'function') {
+        renderDaftarProduk('', filtered);
+    }
+}
 
-        if (!adminId) {
-            document.getElementById('shopName').innerText = "TOKO TIDAK DITEMUKAN";
-            document.getElementById('mainContent').innerHTML = "<p style='text-align:center; padding:30px; color:#ef4444; font-weight:bold;'>URL Tidak Valid. Pastikan menggunakan link dari pemilik toko.</p>";
-        } else {
-            // LOAD DATA TOKO (PROFIL, LOGO, DAN REKENING)
-            db.ref('users/' + adminId).once('value').then(snap => {
-                if(snap.exists()) {
-                    let data = snap.val();
-                    let namaToko = data.shopName || "Toko Online";
-                    document.getElementById('shopName').innerText = namaToko.toUpperCase();
-                    
-                    // PERBAIKAN: Jika ada logo tampilkan, jika tidak tampilkan inisial
-                    if(data.logo) {
-                        document.getElementById('shopLogoContainer').innerHTML = `<img src="${data.logo}">`;
-                    } else {
-                        let dynamicLogoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(namaToko)}&background=fff&color=3B82F6&bold=true`;
-                        document.getElementById('shopLogoContainer').innerHTML = `<img src="${dynamicLogoUrl}">`;
-                    }
-                    
-                    if(data.telepon) {
-                        adminPhone = data.telepon.replace(/\D/g, '');
-                        if(adminPhone.startsWith('0')) adminPhone = '62' + adminPhone.substring(1);
-                    }
-
-                    // Menampilkan data bank jika sudah diatur oleh admin
-                    if(data.bank && data.rekening) {
-                        adminBank = data.bank;
-                        adminRek = data.rekening;
-                        adminAn = data.atasNama || "";
-
-                        document.getElementById('textBankToko').innerText = `${adminBank} - ${adminRek}`;
-                        if(adminAn) document.getElementById('textAnToko').innerText = `a.n ${adminAn}`;
-                        document.getElementById('infoTransferArea').style.display = 'block';
-                    }
-                }
+        // Muat katalog produk
+        onSnapshot(collection(db, "tenants", adminId, "produk"), snap => {
+            window.dataProdukGlobal = [];
+            snap.forEach(child => {
+                let p = child.data(); p.id = child.id;
+                if(p.stok > 0) window.dataProdukGlobal.push(p);
             });
+            renderDaftarProduk('');
+            window.renderShopFrontCategoryFilter();
+        });
+    }
 
-            // LOAD PRODUK FISIK SAJA
-            db.ref('users/' + adminId + '/produk').on('value', snap => {
-                dataProdukGlobal = [];
-                if(snap.exists()) {
-                    snap.forEach(child => {
-                        let p = child.val(); p.id = child.key;
-                        // Hanya masukkan produk fisik dengan stok tersedia
-                        if(p.jenis !== 'digital' && p.stok > 0) {
-                            dataProdukGlobal.push(p);
-                        }
-                    });
-                }
-                renderDaftarProduk(''); 
-            });
+    window.jalankanPencarian = function() { renderDaftarProduk(document.getElementById('searchInput').value.toLowerCase()); }
+
+    function renderDaftarProduk(filterKeyword) {
+        let container = document.getElementById('mainContent'); 
+        let dataTampil = filterKeyword ? window.dataProdukGlobal.filter(p => p.nama.toLowerCase().includes(filterKeyword) || (p.kategori && p.kategori.toLowerCase().includes(filterKeyword))) : window.dataProdukGlobal;
+
+        if(dataTampil.length === 0) {
+            container.innerHTML = "<p style='text-align:center; padding:30px; color:#6B7280;'>Belum ada produk tersedia di toko ini.</p>";
+            return;
         }
 
-        // FUNGSI PENCARIAN
-        function jalankanPencarian() {
-            let keyword = document.getElementById('searchInput').value.toLowerCase();
-            renderDaftarProduk(keyword);
-        }
+        container.innerHTML = "";
+        let kategoriMap = {};
+        dataTampil.forEach(p => {
+            let kat = p.kategori ? p.kategori.toUpperCase() : 'PRODUK LAINNYA';
+            if(!kategoriMap[kat]) kategoriMap[kat] = [];
+            kategoriMap[kat].push(p);
+        });
 
-        // FUNGSI RENDER TAMPILAN PRODUK KE HTML
-        function renderDaftarProduk(filterKeyword) {
-            let container = document.getElementById('mainContent');
-            container.innerHTML = "";
+        for(let kat in kategoriMap) {
+            let html = `<div class="category-title">${kat}</div><div class="product-grid">`;
+            kategoriMap[kat].forEach(p => {
+                let cartItem = window.keranjangPembeli.find(x => x.id === p.id);
+                let currentQty = cartItem ? cartItem.qty : 0;
+                let img = p.gambar ? `<img src="${p.gambar}" alt="${p.nama}">` : `<i class="fa-solid fa-box-open" style="color:#9CA3AF;"></i>`;
 
-            if(dataProdukGlobal.length === 0) {
-                container.innerHTML = "<p style='text-align:center; margin-top:50px; color:#6B7280;'>Belum ada produk yang tersedia.</p>";
-                return;
-            }
-
-            // Filter data jika ada pencarian
-            let dataTampil = dataProdukGlobal;
-            if(filterKeyword) {
-                dataTampil = dataProdukGlobal.filter(p => p.nama.toLowerCase().includes(filterKeyword) || (p.kategori && p.kategori.toLowerCase().includes(filterKeyword)));
-            }
-
-            // Kelompokkan berdasarkan Kategori
-            let kategoriMap = {};
-            dataTampil.forEach(p => {
-                let kat = p.kategori ? p.kategori : 'PRODUK LAINNYA';
-                if(!kategoriMap[kat]) kategoriMap[kat] = [];
-                kategoriMap[kat].push(p);
-            });
-
-            // Susun HTML
-            for(let kat in kategoriMap) {
-                let html = `<div class="category-title">${kat}</div><div class="product-grid">`;
-                
-                kategoriMap[kat].forEach(p => {
-                    let img = p.gambar ? `<img src="${p.gambar}">` : '📦';
-                    
-                    // Cek jumlah barang ini di keranjang
-                    let cartItem = keranjangPembeli.find(x => x.id === p.id);
-                    let currentQty = cartItem ? cartItem.qty : 0;
-
-                    html += `
-                    <div class="product-card">
-                        <div>
-                            <div class="product-img">${img}</div>
-                            <div class="product-name">${p.nama}</div>
-                            <div class="product-price">Rp ${p.harga.toLocaleString('id-ID')}</div>
-                            <div class="product-stock">Stok: ${p.stok}</div>
-                        </div>
-                        <div class="qty-control">
-                            <button class="qty-btn" onclick="ubahQtyCart('${p.id}', -1)">-</button>
-                            <div class="qty-value" id="qty-${p.id}">${currentQty}</div>
-                            <button class="qty-btn" onclick="ubahQtyCart('${p.id}', 1)">+</button>
-                        </div>
-                    </div>`;
-                });
-                
-                html += `</div>`;
-                container.innerHTML += html;
-            }
-
-            if(Object.keys(kategoriMap).length === 0) {
-                container.innerHTML = "<p style='text-align:center; margin-top:50px; color:#6B7280;'>Produk tidak ditemukan.</p>";
-            }
-        }
-
-        // FUNGSI UBAH QTY (- / +) BARANG
-        function ubahQtyCart(id, delta) {
-            let p = dataProdukGlobal.find(x => x.id === id);
-            if(!p) return;
-
-            let item = keranjangPembeli.find(x => x.id === id);
-            
-            if(!item) {
-                if(delta > 0) {
-                    keranjangPembeli.push({ id: p.id, nama: p.nama, harga: p.harga, stok: p.stok, qty: 1 });
-                }
-            } else {
-                let newQty = item.qty + delta;
-                if(newQty > p.stok) {
-                    Swal.fire({toast:true, position:'top-end', icon:'warning', title:'Stok Sisa ' + p.stok, showConfirmButton:false, timer:1500});
-                    return;
-                }
-                if(newQty <= 0) {
-                    keranjangPembeli = keranjangPembeli.filter(x => x !== item); // Hapus dari keranjang
-                } else {
-                    item.qty = newQty;
-                }
-            }
-
-            // Update angka di UI langsung
-            let itemNow = keranjangPembeli.find(x => x.id === id);
-            let qtyEl = document.getElementById(`qty-${id}`);
-            if(qtyEl) qtyEl.innerText = itemNow ? itemNow.qty : 0;
-            
-            updateBottomBar();
-        }
-
-        // UPDATE BAR BAWAH MENGAMBANG
-        function updateBottomBar() {
-            let total = 0; let totalBarang = 0;
-            keranjangPembeli.forEach(i => { total += (i.harga * i.qty); totalBarang += i.qty; });
-            
-            const bb = document.getElementById('bottomBar');
-            if(totalBarang > 0) {
-                document.getElementById('bbItems').innerText = totalBarang + " Barang";
-                document.getElementById('bbTotal').innerText = "Rp " + total.toLocaleString('id-ID');
-                bb.classList.remove('hidden');
-            } else {
-                bb.classList.add('hidden');
-            }
-        }
-
-        // FUNGSI MODAL & CHECKOUT
-        function bukaModalCheckout() {
-            document.getElementById('checkoutModal').style.display = 'flex';
-            renderRincianDiModal();
-        }
-
-        function tutupModalCheckout() { 
-            document.getElementById('checkoutModal').style.display = 'none'; 
-        }
-
-        function renderRincianDiModal() {
-            let html = '';
-            let totalHitung = 0;
-            keranjangPembeli.forEach((item, index) => {
-                totalHitung += (item.harga * item.qty);
-                html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #E5E7EB; padding-bottom:10px;">
+                html += `<div class="product-card">
                     <div>
-                        <div style="font-weight:600; font-size:13px; color:#1F2937;">${item.nama}</div>
-                        <div style="font-size:12px; color:#6B7280;">${item.qty} x Rp ${item.harga.toLocaleString('id-ID')}</div>
+                        <div class="product-img">${img}</div>
+                        <div class="product-name">${p.nama}</div>
+                        <div class="product-price">Rp ${(p.harga||0).toLocaleString('id-ID')}</div>
+                        <div class="product-stock">Stok: ${p.stok}</div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="font-weight:700; color:#3B82F6;">Rp ${(item.qty*item.harga).toLocaleString('id-ID')}</div>
-                        <span onclick="hapusDariModal(${index})" style="color:#ef4444; font-size:16px; cursor:pointer; background:#FEE2E2; padding:3px 6px; border-radius:6px;">🗑️</span>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="ubahJumlah('${p.id}', -1, ${p.stok})">-</button>
+                        <span class="qty-value">${currentQty}</span>
+                        <button class="qty-btn" onclick="ubahJumlah('${p.id}', 1, ${p.stok})">+</button>
                     </div>
                 </div>`;
             });
-            document.getElementById('rincianKeranjang').innerHTML = html;
-            document.getElementById('modalTotal').innerText = "Rp " + totalHitung.toLocaleString('id-ID');
+            html += `</div>`;
+            container.innerHTML += html;
+        }
+    }
+
+    window.ubahJumlah = function(id, delta, stokMaks) {
+        let item = window.keranjangPembeli.find(x => x.id === id);
+        let prod = window.dataProdukGlobal.find(x => x.id === id);
+        if(!prod) return;
+
+        if(item) {
+            let newQty = item.qty + delta;
+            if(newQty > stokMaks) return Swal.fire("Stok Terbatas", "Jumlah melebihi stok yang tersedia.", "warning");
+            if(newQty <= 0) {
+                window.keranjangPembeli = window.keranjangPembeli.filter(x => x.id !== id);
+            } else {
+                item.qty = newQty;
+            }
+        } else if(delta > 0) {
+            window.keranjangPembeli.push({ id: prod.id, nama: prod.nama, harga: prod.harga, qty: 1, stok: prod.stok, hargaBeli: prod.hargaBeli || 0 });
         }
 
-        // Hapus item jika user klik tong sampah di modal
-        window.hapusDariModal = function(index) {
-            keranjangPembeli.splice(index, 1);
-            renderRincianDiModal();
-            updateBottomBar();
-            jalankanPencarian(); // refresh UI Qty
-            if(keranjangPembeli.length === 0) tutupModalCheckout();
+        renderDaftarProduk(document.getElementById('searchInput').value.toLowerCase());
+        updateBottomBar();
+    }
+      function updateBottomBar() {
+        let totalItems = window.keranjangPembeli.reduce((sum, item) => sum + item.qty, 0);
+        let totalPrice = window.keranjangPembeli.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+
+        const bb = document.getElementById('bottomBar');
+                  if(totalItems > 0) {
+            document.getElementById('bbItems').innerText = totalItems + " Barang";
+            document.getElementById('bbTotal').innerText = "Rp " + totalPrice.toLocaleString('id-ID');
+            bb.classList.remove('hidden');
+        } else {
+            bb.classList.add('hidden');
+        }
+    }
+
+    window.bukaModalCheckout = function() {
+        if(window.keranjangPembeli.length === 0) return;
+        let rincianHTML = "";
+        let total = 0;
+        window.keranjangPembeli.forEach(item => {
+            let sub = item.harga * item.qty;
+            total += sub;
+            rincianHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+                <span>${item.nama} x${item.qty}</span>
+                <b>Rp ${sub.toLocaleString('id-ID')}</b>
+            </div>`;
+        });
+        document.getElementById('rincianKeranjang').innerHTML = rincianHTML;
+        document.getElementById('modalTotal').innerText = "Rp " + total.toLocaleString('id-ID');
+        document.getElementById('checkoutModal').style.display = 'flex';
+    }
+
+    window.tutupModalCheckout = function() {
+        document.getElementById('checkoutModal').style.display = 'none';
+    }
+
+    window.prosesKirimPesanan = async function() {
+        const nama = document.getElementById('cusNama').value.trim();
+        const wa = document.getElementById('cusWa').value.trim();
+        const alamat = document.getElementById('cusAlamat').value.trim();
+
+        if(!nama || !wa || !alamat) {
+            return Swal.fire("Peringatan", "Mohon lengkapi Nama, No. WA, dan Alamat!", "warning");
         }
 
-        function prosesKirimPesanan() {
-            const nama = document.getElementById('cusNama').value.trim();
-            const wa = document.getElementById('cusWa').value.trim();
-            const alamat = document.getElementById('cusAlamat').value.trim();
-
-            if(!nama || !wa || !alamat) return Swal.fire("Perhatian", "Mohon lengkapi data Nama, No WhatsApp, dan Alamat.", "warning");
-
-            let totalFix = keranjangPembeli.reduce((sum, i) => sum + (i.harga * i.qty), 0);
-
-            const dataPesananMasuk = {
-                waktu: new Date().toLocaleString('id-ID'),
-                pelanggan: { nama: nama, telp: wa, alamat: alamat },
-                items: keranjangPembeli,
-                total: totalFix,
+        let total = window.keranjangPembeli.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+        
+        try {
+            Swal.fire({ title: 'Sending...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            // Simpan ke Firestore
+            await addDoc(collection(db, "tenants", adminId, "pesanan_online"), {
+                pelanggan: { nama, telp: wa, alamat },
+                items: window.keranjangPembeli,
+                total: total,
                 status: 'Baru',
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
+                timestamp: serverTimestamp()
+            });
 
-            Swal.fire({ title: 'Memproses Pesanan...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
-
-            db.ref('users/' + adminId + '/pesanan_online').push(dataPesananMasuk).then(() => {
-                Swal.close();
+            // Redirect ke WhatsApp Admin jika nomor ada
+            if(window.adminPhone) {
+                let pesanWA = `Halo, saya *${nama}*\nAlamat: ${alamat}\n\nPesanan Saya:\n`;
+                window.keranjangPembeli.forEach(i => {
+                    pesanWA += `- ${i.nama} x${i.qty} (Rp ${(i.harga*i.qty).toLocaleString('id-ID')})\n`;
+                });
+                pesanWA += `\n*Total: Rp ${total.toLocaleString('id-ID')}*`;
                 
-                let teksWa = `Halo Admin *${document.getElementById('shopName').innerText}*, saya mau pesan:\n\n`;
-                keranjangPembeli.forEach(i => { teksWa += `- ${i.qty}x ${i.nama} (Rp${(i.qty * i.harga).toLocaleString('id-ID')})\n`; });
-                teksWa += `\n*Total: Rp${totalFix.toLocaleString('id-ID')}*\n\n`;
-                
-                // Info Bank dimasukkan ke WhatsApp jika disetting admin
-                if(adminBank && adminRek) {
-                    teksWa += `*Metode Pembayaran (Transfer):*\n${adminBank} - ${adminRek} ${adminAn ? '(a.n '+adminAn+')' : ''}\n\n`;
-                }
-
-                teksWa += `*Kontak & Pengiriman:*\nNama: ${nama}\nNo WA: ${wa}\nAlamat: ${alamat}\n\n`;
-                teksWa += `Tolong segera diproses ya! (Saya akan sertakan bukti transfer/pembayaran).`;
-
-                let linkWa = `https://wa.me/${adminPhone}?text=${encodeURIComponent(teksWa)}`;
-                window.open(linkWa, "_blank");
-
-                // Reset
-                keranjangPembeli = []; 
-                updateBottomBar(); 
-                jalankanPencarian(); // Refresh angka qty di grid
+                let urlWA = `https://wa.me/${window.adminPhone}?text=${encodeURIComponent(pesanWA)}`;
+                window.location.href = urlWA;
+            } else {
+                Swal.fire("Berhasil", "Pesanan Anda telah dikirim ke toko!", "success");
                 tutupModalCheckout();
-                Swal.fire("Berhasil", "Pesanan terkirim!", "success");
-
-            }).catch(e => Swal.fire("Gagal", "Koneksi terputus. " + e.message, "error"));
+                window.keranjangPembeli = [];
+                updateBottomBar();
+            }
+        } catch(err) {
+            Swal.fire("Gagal", err.message, "error");
         }
-    </script>
+    }
+</script>
 </body>
 </html>
